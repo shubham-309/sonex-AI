@@ -1,0 +1,9 @@
+streamlit
+langchain-core
+python-dotenv
+langchain-openai
+openai
+langchain-anthropic
+langchain-groq
+shutil
+pathlib
