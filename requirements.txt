@@ -6,3 +6,4 @@ openai
 langchain-anthropic
 langchain-groq
 pathlib
+faster-whisper
