@@ -8,6 +8,10 @@ openai
 langchain-anthropic
 langchain-groq
 pathlib
+tensorflow
+torch 
+torchvision 
+torchaudio
 transformers
 faster-whisper
 fpdf
