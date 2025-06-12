@@ -1,3 +1,5 @@
+arabic-reshaper
+python-bidi
 streamlit
 langchain-core
 python-dotenv
