@@ -3,7 +3,30 @@ import os
 import tempfile
 from utils import process_audio_file  # Ensure this function is correctly defined in utils
 from fpdf import FPDF
+import arabic_reshaper
+from bidi.algorithm import get_display
 import io
+
+class HebrewPDF(FPDF):
+    def __init__(self):
+        super().__init__()
+        # Add the Hebrew font
+        self.add_font('DejaVu', '', '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', uni=True)
+    
+    def hebrew_cell(self, w, h, txt, border=0, align='R'):
+        # Reshape and convert to bidi
+        reshaped_text = arabic_reshaper.reshape(txt)
+        bidi_text = get_display(reshaped_text)
+        self.cell(w, h, bidi_text, border, align=align)
+    
+    def hebrew_multi_cell(self, w, h, txt, border=0, align='R'):
+        # Process text line by line
+        lines = txt.split('\n')
+        for line in lines:
+            if line.strip():  # Only process non-empty lines
+                reshaped_text = arabic_reshaper.reshape(line)
+                bidi_text = get_display(reshaped_text)
+                self.multi_cell(w, h, bidi_text, border, align=align)
 
 # Set up page configuration
 st.set_page_config("Advance Services", page_icon="logo/image.png", layout="wide")
@@ -61,20 +84,19 @@ if st.button("Process"):
                 st.write("### Generated Results")
                 st.write(results)
                 
-                # Create PDF
-                pdf = FPDF()
+                # Create PDF with Hebrew support
+                pdf = HebrewPDF()
                 pdf.add_page()
-                pdf.set_font("Arial", size=12)
+                pdf.set_font('DejaVu', '', 14)
+                pdf.set_right_margin(10)
+                pdf.set_left_margin(10)
                 
-                # Split content by newlines and write to PDF
-                for line in results.split('\n'):
-                    # Encode the line to handle special characters
-                    encoded_line = line.encode('latin-1', 'replace').decode('latin-1')
-                    pdf.multi_cell(0, 10, encoded_line)
+                # Write content to PDF
+                pdf.hebrew_multi_cell(0, 10, results)
                 
                 # Save PDF to a temporary file first
                 temp_pdf_path = os.path.join(temp_dir, "temp.pdf")
-                pdf.output(temp_pdf_path)
+                pdf.output(temp_pdf_path, 'F')
                 
                 # Read the temporary PDF file into memory
                 with open(temp_pdf_path, 'rb') as pdf_file:
@@ -106,21 +128,20 @@ if st.button("Process"):
                         st.write(f"### Results for {file_name}")
                         st.write(results)
                         
-                        # Create PDF
-                        pdf = FPDF()
+                        # Create PDF with Hebrew support
+                        pdf = HebrewPDF()
                         pdf.add_page()
-                        pdf.set_font("Arial", size=12)
+                        pdf.set_font('DejaVu', '', 14)
+                        pdf.set_right_margin(10)
+                        pdf.set_left_margin(10)
                         
-                        # Split content by newlines and write to PDF
-                        for line in results.split('\n'):
-                            # Encode the line to handle special characters
-                            encoded_line = line.encode('latin-1', 'replace').decode('latin-1')
-                            pdf.multi_cell(0, 10, encoded_line)
+                        # Write content to PDF
+                        pdf.hebrew_multi_cell(0, 10, results)
                         
                         # Save PDF to a temporary file first
                         temp_dir = tempfile.gettempdir()
                         temp_pdf_path = os.path.join(temp_dir, f"temp_{index}.pdf")
-                        pdf.output(temp_pdf_path)
+                        pdf.output(temp_pdf_path, 'F')
                         
                         # Read the temporary PDF file into memory
                         with open(temp_pdf_path, 'rb') as pdf_file:
