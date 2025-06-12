@@ -72,16 +72,22 @@ if st.button("Process"):
                     encoded_line = line.encode('latin-1', 'replace').decode('latin-1')
                     pdf.multi_cell(0, 10, encoded_line)
                 
-                # Generate PDF file in memory
-                pdf_output = io.BytesIO()
-                pdf.output(pdf_output)
-                pdf_output.seek(0)
+                # Save PDF to a temporary file first
+                temp_pdf_path = os.path.join(temp_dir, "temp.pdf")
+                pdf.output(temp_pdf_path)
+                
+                # Read the temporary PDF file into memory
+                with open(temp_pdf_path, 'rb') as pdf_file:
+                    pdf_data = pdf_file.read()
+                
+                # Clean up the temporary file
+                os.remove(temp_pdf_path)
                 
                 # Add download button
                 base_name = os.path.splitext(os.path.basename(audio_file_path))[0]
                 st.download_button(
                     label="Download Results as PDF",
-                    data=pdf_output,
+                    data=pdf_data,
                     file_name=f"{base_name}_results.pdf",
                     mime="application/pdf"
                 )
@@ -111,16 +117,23 @@ if st.button("Process"):
                             encoded_line = line.encode('latin-1', 'replace').decode('latin-1')
                             pdf.multi_cell(0, 10, encoded_line)
                         
-                        # Generate PDF file in memory
-                        pdf_output = io.BytesIO()
-                        pdf.output(pdf_output)
-                        pdf_output.seek(0)
+                        # Save PDF to a temporary file first
+                        temp_dir = tempfile.gettempdir()
+                        temp_pdf_path = os.path.join(temp_dir, f"temp_{index}.pdf")
+                        pdf.output(temp_pdf_path)
+                        
+                        # Read the temporary PDF file into memory
+                        with open(temp_pdf_path, 'rb') as pdf_file:
+                            pdf_data = pdf_file.read()
+                        
+                        # Clean up the temporary file
+                        os.remove(temp_pdf_path)
                         
                         # Add download button
                         base_name = os.path.splitext(file_name)[0]
                         st.download_button(
                             label=f"Download Results for {file_name} as PDF",
-                            data=pdf_output,
+                            data=pdf_data,
                             file_name=f"{base_name}_results.pdf",
                             mime="application/pdf"
                         )
