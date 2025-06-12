@@ -385,6 +385,7 @@ def process_audio_file(transcript_model, audio_file_path, output_dir, llm_model,
 
     if base_name in [line.split('|')[0].strip() for line in processed_files]:
         st.error(f"The file '{base_name}' has already been processed.")
+        return None
     else:
         audio_file= open(audio_file_path, "rb")
 
@@ -404,16 +405,15 @@ def process_audio_file(transcript_model, audio_file_path, output_dir, llm_model,
             with open(output_file_path, "w", encoding="utf-8") as f:
                 f.write(f"{base_name}\n\n{text_transcribe}\n\n{speakers}")
 
-            
             timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
             with open(log_file_path, "a") as log_file:
                     log_file.write(f"{base_name} | {timestamp}\n")
 
             st.success('Transcription saved successfully!', icon="✅")
+            return f"{base_name}\n\n{text_transcribe}\n\n{speakers}"
         
         else:
-            
             st.toast("Please wait analysing transcription")
             sleep(0.6)
 
@@ -443,7 +443,6 @@ def process_audio_file(transcript_model, audio_file_path, output_dir, llm_model,
             with open(json_file_path, "w", encoding="utf-8") as json_file:
                 json.dump(output_data, json_file, indent=4, ensure_ascii=False)
 
-
             base_name = os.path.splitext(os.path.basename(audio_file_path))[0]
             output_file_path = os.path.join(output_dir, f"{base_name}.txt")
 
@@ -452,7 +451,7 @@ def process_audio_file(transcript_model, audio_file_path, output_dir, llm_model,
             st.toast("Hooray! Here is your results")
             sleep(0.6)
 
-            # Write the results to a txt file
+            # Write the results to a text file
             with open(output_file_path, "w") as f:
                 f.write(final_output)
 
@@ -462,3 +461,4 @@ def process_audio_file(transcript_model, audio_file_path, output_dir, llm_model,
                     log_file.write(f"{base_name} | {timestamp}\n")
 
             st.success('Successfully saved your Audio data!', icon="✅")
+            return final_output
