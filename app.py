@@ -10,23 +10,60 @@ import io
 class HebrewPDF(FPDF):
     def __init__(self):
         super().__init__()
-        # Add the Hebrew font
-        self.add_font('DejaVu', '', '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', uni=True)
+        # Try different font paths that might be available
+        font_paths = [
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',  # Linux
+            '/usr/share/fonts/TTF/DejaVuSans.ttf',  # Alternative Linux path
+            'DejaVuSans.ttf'  # Local directory
+        ]
+        
+        font_found = False
+        for font_path in font_paths:
+            if os.path.exists(font_path):
+                try:
+                    self.add_font('DejaVu', '', font_path, uni=True)
+                    font_found = True
+                    break
+                except:
+                    continue
+        
+        if not font_found:
+            try:
+                # If DejaVu is not found, download it to the local directory
+                import urllib.request
+                font_url = "https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans.ttf"
+                if not os.path.exists('DejaVuSans.ttf'):
+                    urllib.request.urlretrieve(font_url, 'DejaVuSans.ttf')
+                self.add_font('DejaVu', '', 'DejaVuSans.ttf', uni=True)
+            except:
+                # Last resort: use a built-in font
+                st.warning("Could not load DejaVu font. PDF might not display Hebrew text correctly.")
+                self.add_font('Arial', '', 'Arial', uni=True)
     
     def hebrew_cell(self, w, h, txt, border=0, align='R'):
-        # Reshape and convert to bidi
-        reshaped_text = arabic_reshaper.reshape(txt)
-        bidi_text = get_display(reshaped_text)
-        self.cell(w, h, bidi_text, border, align=align)
+        try:
+            # Reshape and convert to bidi
+            reshaped_text = arabic_reshaper.reshape(txt)
+            bidi_text = get_display(reshaped_text)
+            self.cell(w, h, bidi_text, border, align=align)
+        except:
+            # Fallback if reshaping fails
+            self.cell(w, h, txt, border, align=align)
     
     def hebrew_multi_cell(self, w, h, txt, border=0, align='R'):
-        # Process text line by line
-        lines = txt.split('\n')
-        for line in lines:
-            if line.strip():  # Only process non-empty lines
-                reshaped_text = arabic_reshaper.reshape(line)
-                bidi_text = get_display(reshaped_text)
-                self.multi_cell(w, h, bidi_text, border, align=align)
+        try:
+            # Process text line by line
+            lines = txt.split('\n')
+            for line in lines:
+                if line.strip():  # Only process non-empty lines
+                    reshaped_text = arabic_reshaper.reshape(line)
+                    bidi_text = get_display(reshaped_text)
+                    self.multi_cell(w, h, bidi_text, border, align=align)
+                else:
+                    self.ln()  # Add empty line
+        except:
+            # Fallback if reshaping fails
+            self.multi_cell(w, h, txt, border, align=align)
 
 # Set up page configuration
 st.set_page_config("Advance Services", page_icon="logo/image.png", layout="wide")
