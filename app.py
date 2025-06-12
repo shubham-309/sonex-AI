@@ -2,6 +2,8 @@ import streamlit as st
 import os
 import tempfile
 from utils import process_audio_file  # Ensure this function is correctly defined in utils
+from fpdf import FPDF
+import io
 
 # Set up page configuration
 st.set_page_config("Advance Services", page_icon="logo/image.png", layout="wide")
@@ -53,7 +55,36 @@ if st.button("Process"):
         
         # Show a progress bar and spinner while processing
         with st.spinner("Processing audio..."):
-            process_audio_file(transcript_model, audio_file_path, output_dir, model, only_transcripts)
+            results = process_audio_file(transcript_model, audio_file_path, output_dir, model, only_transcripts)
+            
+            if results:
+                st.write("### Generated Results")
+                st.write(results)
+                
+                # Create PDF
+                pdf = FPDF()
+                pdf.add_page()
+                pdf.set_font("Arial", size=12)
+                
+                # Split content by newlines and write to PDF
+                for line in results.split('\n'):
+                    # Encode the line to handle special characters
+                    encoded_line = line.encode('latin-1', 'replace').decode('latin-1')
+                    pdf.multi_cell(0, 10, encoded_line)
+                
+                # Generate PDF file in memory
+                pdf_output = io.BytesIO()
+                pdf.output(pdf_output)
+                pdf_output.seek(0)
+                
+                # Add download button
+                base_name = os.path.splitext(os.path.basename(audio_file_path))[0]
+                st.download_button(
+                    label="Download Results as PDF",
+                    data=pdf_output,
+                    file_name=f"{base_name}_results.pdf",
+                    mime="application/pdf"
+                )
 
     elif option == "Load Audio Directory" and audio_dir:
         if os.path.isdir(audio_dir):
@@ -63,7 +94,36 @@ if st.button("Process"):
             if total_files > 0:
                 for index, file_name in enumerate(audio_files):
                     audio_file_path = os.path.join(audio_dir, file_name)
-                    process_audio_file(transcript_model, audio_file_path, output_dir, model, only_transcripts)
+                    results = process_audio_file(transcript_model, audio_file_path, output_dir, model, only_transcripts)
+                    
+                    if results:
+                        st.write(f"### Results for {file_name}")
+                        st.write(results)
+                        
+                        # Create PDF
+                        pdf = FPDF()
+                        pdf.add_page()
+                        pdf.set_font("Arial", size=12)
+                        
+                        # Split content by newlines and write to PDF
+                        for line in results.split('\n'):
+                            # Encode the line to handle special characters
+                            encoded_line = line.encode('latin-1', 'replace').decode('latin-1')
+                            pdf.multi_cell(0, 10, encoded_line)
+                        
+                        # Generate PDF file in memory
+                        pdf_output = io.BytesIO()
+                        pdf.output(pdf_output)
+                        pdf_output.seek(0)
+                        
+                        # Add download button
+                        base_name = os.path.splitext(file_name)[0]
+                        st.download_button(
+                            label=f"Download Results for {file_name} as PDF",
+                            data=pdf_output,
+                            file_name=f"{base_name}_results.pdf",
+                            mime="application/pdf"
+                        )
                     
             else:
                 st.error("No supported audio files found in the specified directory.")
